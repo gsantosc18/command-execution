@@ -1,0 +1,9 @@
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/observer/OnUpdateCommandSubject.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/persist/entity/CommandEntity.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/view/MainView.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/persist/repository/CommandRepository.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/persist/repository/impl/CommandRepositoryImpl.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/observer/CommandObserver.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/utils/NotificationUtil.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/domain/Command.java
+/home/gedalias/NetBeansProjects/CommandApplication/src/main/java/com/gedalias/commandexecution/Application.java

@@ -1,0 +1,15 @@
+com/gedalias/commandexecution/view/MainView$2.class
+com/gedalias/commandexecution/persist/entity/CommandEntity.class
+com/gedalias/commandexecution/view/MainView.class
+com/gedalias/commandexecution/observer/CommandObserver.class
+com/gedalias/commandexecution/Application.class
+com/gedalias/commandexecution/view/MainView$3.class
+com/gedalias/commandexecution/persist/repository/impl/CommandRepositoryImpl.class
+com/gedalias/commandexecution/view/MainView$6.class
+com/gedalias/commandexecution/view/MainView$4.class
+com/gedalias/commandexecution/utils/NotificationUtil.class
+com/gedalias/commandexecution/domain/Command.class
+com/gedalias/commandexecution/persist/repository/CommandRepository.class
+com/gedalias/commandexecution/view/MainView$1.class
+com/gedalias/commandexecution/observer/OnUpdateCommandSubject.class
+com/gedalias/commandexecution/view/MainView$5.class
