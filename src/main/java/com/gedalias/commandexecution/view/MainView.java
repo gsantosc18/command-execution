@@ -155,16 +155,16 @@ public class MainView extends javax.swing.JFrame {
                             .addComponent(jLabel3)
                             .addComponent(jLabel4)
                             .addGroup(panelCreateCommandLayout.createSequentialGroup()
-                                .addComponent(saveCommandBtn)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deleteCommandBtn)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(executeCommandBtn))
-                            .addGroup(panelCreateCommandLayout.createSequentialGroup()
                                 .addComponent(resetCommandBtn)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(fileChooseBtn)))
-                        .addGap(0, 63, Short.MAX_VALUE)))
+                                .addComponent(fileChooseBtn))
+                            .addGroup(panelCreateCommandLayout.createSequentialGroup()
+                                .addComponent(saveCommandBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deleteCommandBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(executeCommandBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 2, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         panelCreateCommandLayout.setVerticalGroup(
@@ -186,12 +186,12 @@ public class MainView extends javax.swing.JFrame {
                 .addGroup(panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(saveCommandBtn)
                     .addComponent(deleteCommandBtn)
-                    .addComponent(executeCommandBtn))
+                    .addComponent(executeCommandBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(resetCommandBtn)
                     .addComponent(fileChooseBtn))
-                .addContainerGap(148, Short.MAX_VALUE))
+                .addGap(148, 148, 148))
         );
 
         outputCommandTA.setColumns(20);
@@ -287,8 +287,18 @@ public class MainView extends javax.swing.JFrame {
     private void saveCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCommandBtnActionPerformed
         final String description = descriptionTF.getText();
         final String command = commandTF.getText();
-        commandRepository.save(new CommandEntity(null, description, command, 
-                LocalDateTime.now(), null));
+        
+        CommandEntity commandEntity = new CommandEntity(null, description, command, 
+                LocalDateTime.now(), null);
+        
+        if(selectedCommand != null) {
+            selectedCommand.setCommand(command);
+            selectedCommand.setDescription(description);
+            selectedCommand.setUpdatedAt(LocalDateTime.now());
+            commandEntity = selectedCommand;
+        }
+        
+        commandRepository.save(commandEntity);
     }//GEN-LAST:event_saveCommandBtnActionPerformed
 
     private void stopProcessBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopProcessBtnActionPerformed
@@ -371,7 +381,7 @@ public class MainView extends javax.swing.JFrame {
     
     private void registerObserver() {
         OnUpdateCommandSubject.getInstance().add((c) -> {
-                viewDataCommands.add(c);
+                viewDataCommands = commandRepository.findAll();
                 refreshDataTable();
         });
     }

@@ -18,14 +18,17 @@ public class OnUpdateCommandSubject implements CommandExecuteObserver<CommandEnt
         return instance;
     }
     
+    @Override
     public void add(CommandObserver observer) {
         observers.add(observer);
     }
     
+    @Override
     public void onUpdateCommandEvent(CommandEntity commandEntity) {
         notifyObservers(commandEntity);
     }
     
+    @Override
     public void notifyObservers(CommandEntity commandEntity) {
         for(CommandObserver observer: observers) {
             observer.update(commandEntity);
