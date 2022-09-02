@@ -10,16 +10,18 @@ import com.gedalias.commandexecution.persist.repository.CommandRepository;
 import com.gedalias.commandexecution.persist.repository.impl.CommandRepositoryImpl;
 import com.gedalias.commandexecution.utils.NotificationUtil;
 import java.awt.Dimension;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JTable;
+
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -27,23 +29,28 @@ import javax.swing.table.DefaultTableModel;
  */
 public class MainView extends javax.swing.JFrame {
     
+    interface CommandValueInputEvent {
+        void inputValue(String value);
+    }
+    
     private JTable table;
-    private boolean showPanel = false;
     private boolean showComponentOutputCommand = false;
-    private final Dimension SHOW = new Dimension(255, 181);
-    private final Dimension HIDDEN = new Dimension(0, 0);
     private Process executedProcess;
     private final String BREAK_LINE = "\n";
     
-    private final String[] COLUMNS = new String[]{
-        "Descrição", "Comando"
-    };
+    private final String[] COLUMNS = new String[]{ "ID","Descrição", "Comando"};
+    private final int EXECUTION_PANEL_HEIGHT = 250;
     private final CommandRepository commandRepository = new CommandRepositoryImpl();
+    
+    private List<CommandEntity> viewDataCommands;
+    private CommandEntity selectedCommand;
+    
+    private CommandValueInputEvent inputValueEvent;
 
     /**
      * Creates new form MainView
      */
-    public MainView() {     
+    public MainView() {
         preLoadCommands();
         registerObserver();
         initComponents();
@@ -58,11 +65,7 @@ public class MainView extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        newCommandBtn = new javax.swing.JButton();
         scrollPanel = new javax.swing.JScrollPane();
-        executeCommandBtn = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
-        commandDescriptionView = new javax.swing.JLabel();
         panelCreateCommand = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         descriptionTF = new javax.swing.JTextField();
@@ -71,6 +74,10 @@ public class MainView extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         commandTF = new javax.swing.JTextField();
         saveCommandBtn = new javax.swing.JButton();
+        deleteCommandBtn = new javax.swing.JButton();
+        executeCommandBtn = new javax.swing.JButton();
+        resetCommandBtn = new javax.swing.JButton();
+        fileChooseBtn = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
         scrollCommandShow = new javax.swing.JScrollPane();
         outputCommandTA = new javax.swing.JTextArea();
@@ -81,34 +88,14 @@ public class MainView extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
 
-        newCommandBtn.setText("Novo");
-        newCommandBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newCommandBtnActionPerformed(evt);
-            }
-        });
-
         buildTable();
-
-        executeCommandBtn.setText("Executar");
-        executeCommandBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                executeCommandBtnActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setFont(new java.awt.Font("sansserif", 1, 14)); // NOI18N
-        jLabel1.setText("Comando a ser executado:");
-
-        commandDescriptionView.setText("Nenhum");
 
         panelCreateCommand.setMaximumSize(new java.awt.Dimension(255, 181));
         panelCreateCommand.setMinimumSize(new java.awt.Dimension(0, 0));
         panelCreateCommand.setPreferredSize(new java.awt.Dimension(0, 0));
-        showOrHiddenCreateCommandView();
 
         jLabel2.setFont(new java.awt.Font("sansserif", 1, 18)); // NOI18N
-        jLabel2.setText("Criar novo Comando");
+        jLabel2.setText("Comando");
 
         jLabel3.setFont(new java.awt.Font("sansserif", 1, 12)); // NOI18N
         jLabel3.setText("Descrição:");
@@ -123,13 +110,41 @@ public class MainView extends javax.swing.JFrame {
             }
         });
 
+        deleteCommandBtn.setText("Delete");
+        deleteCommandBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteCommandBtnActionPerformed(evt);
+            }
+        });
+
+        executeCommandBtn.setText("Executar");
+        executeCommandBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                executeCommandBtnActionPerformed(evt);
+            }
+        });
+
+        resetCommandBtn.setText("Reset");
+        resetCommandBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetCommandBtnActionPerformed(evt);
+            }
+        });
+
+        fileChooseBtn.setText("Buscar Arquivo");
+        fileChooseBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileChooseBtnActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout panelCreateCommandLayout = new javax.swing.GroupLayout(panelCreateCommand);
         panelCreateCommand.setLayout(panelCreateCommandLayout);
         panelCreateCommandLayout.setHorizontalGroup(
             panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCreateCommandLayout.createSequentialGroup()
                 .addComponent(jLabel2)
-                .addGap(0, 52, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(panelCreateCommandLayout.createSequentialGroup()
                 .addGroup(panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(descriptionTF, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -139,8 +154,17 @@ public class MainView extends javax.swing.JFrame {
                         .addGroup(panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
                             .addComponent(jLabel4)
-                            .addComponent(saveCommandBtn))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addGroup(panelCreateCommandLayout.createSequentialGroup()
+                                .addComponent(saveCommandBtn)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deleteCommandBtn)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(executeCommandBtn))
+                            .addGroup(panelCreateCommandLayout.createSequentialGroup()
+                                .addComponent(resetCommandBtn)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(fileChooseBtn)))
+                        .addGap(0, 63, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         panelCreateCommandLayout.setVerticalGroup(
@@ -159,8 +183,15 @@ public class MainView extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(commandTF, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(saveCommandBtn)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveCommandBtn)
+                    .addComponent(deleteCommandBtn)
+                    .addComponent(executeCommandBtn))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(panelCreateCommandLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(resetCommandBtn)
+                    .addComponent(fileChooseBtn))
+                .addContainerGap(148, Short.MAX_VALUE))
         );
 
         outputCommandTA.setColumns(20);
@@ -171,6 +202,12 @@ public class MainView extends javax.swing.JFrame {
         stopProcessBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 stopProcessBtnActionPerformed(evt);
+            }
+        });
+
+        inputParameterCommandTF.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                inputParameterCommandTFActionPerformed(evt);
             }
         });
 
@@ -189,58 +226,42 @@ public class MainView extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(newCommandBtn)
-                            .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 576, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 576, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(panelCreateCommand, javax.swing.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE))
+                        .addComponent(panelCreateCommand, javax.swing.GroupLayout.PREFERRED_SIZE, 310, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(executeCommandBtn)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(commandDescriptionView, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jSeparator2)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(sendParameterCommandBtn)
                                     .addComponent(stopProcessBtn))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(scrollCommandShow, javax.swing.GroupLayout.PREFERRED_SIZE, 498, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(inputParameterCommandTF, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 576, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                                    .addComponent(scrollCommandShow)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(inputParameterCommandTF, javax.swing.GroupLayout.PREFERRED_SIZE, 484, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(0, 0, Short.MAX_VALUE)))))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(panelCreateCommand, javax.swing.GroupLayout.PREFERRED_SIZE, 350, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(newCommandBtn)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 317, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(panelCreateCommand, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(executeCommandBtn)
-                    .addComponent(jLabel1)
-                    .addComponent(commandDescriptionView))
+                        .addComponent(scrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(stopProcessBtn)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(scrollCommandShow, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(stopProcessBtn)
+                    .addComponent(scrollCommandShow, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(inputParameterCommandTF, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(inputParameterCommandTF, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sendParameterCommandBtn))
                 .addContainerGap())
         );
@@ -257,7 +278,7 @@ public class MainView extends javax.swing.JFrame {
         }
         
         final int rowPosition = table.getSelectedRow();        
-        final String command = (String) table.getModel().getValueAt(rowPosition, 1);
+        final String command = viewDataCommands.get(rowPosition).getCommand();
         resetViewCommandExecution();
         executeCommand(command);
         
@@ -266,18 +287,9 @@ public class MainView extends javax.swing.JFrame {
     private void saveCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveCommandBtnActionPerformed
         final String description = descriptionTF.getText();
         final String command = commandTF.getText();
-        commandRepository.save(new CommandEntity(null, description, command, LocalDateTime.now(), null));
-        System.out.println("Novo commando salvo");
+        commandRepository.save(new CommandEntity(null, description, command, 
+                LocalDateTime.now(), null));
     }//GEN-LAST:event_saveCommandBtnActionPerformed
-
-    private void newCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCommandBtnActionPerformed
-        if(!showPanel) {
-            showPanel = true;
-            showOrHiddenCreateCommandView();
-            redimentionFrame();
-        }
-        System.out.println(panelCreateCommand.getSize());
-    }//GEN-LAST:event_newCommandBtnActionPerformed
 
     private void stopProcessBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopProcessBtnActionPerformed
         executedProcess.destroy();
@@ -287,8 +299,40 @@ public class MainView extends javax.swing.JFrame {
 
     private void sendParameterCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendParameterCommandBtnActionPerformed
         final String parameter = inputParameterCommandTF.getText();
-        inputValueInCommandExecution(parameter);
+        if(inputValueEvent != null) {
+            inputValueEvent.inputValue(parameter);
+        }        
     }//GEN-LAST:event_sendParameterCommandBtnActionPerformed
+
+    private void deleteCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCommandBtnActionPerformed
+        final boolean confirmation = NotificationUtil.confirm("Deseja realmente apagar o registro?");
+        if(confirmation) {
+            viewDataCommands.remove(selectedCommand);
+            refreshDataTable();
+            commandRepository.delete(selectedCommand);
+        }
+    }//GEN-LAST:event_deleteCommandBtnActionPerformed
+
+    private void inputParameterCommandTFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inputParameterCommandTFActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_inputParameterCommandTFActionPerformed
+
+    private void resetCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetCommandBtnActionPerformed
+        selectedCommand = null;
+        descriptionTF.setText("");
+        commandTF.setText("");
+    }//GEN-LAST:event_resetCommandBtnActionPerformed
+
+    private void fileChooseBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileChooseBtnActionPerformed
+        JFileChooser fileChoose = new JFileChooser();
+        fileChoose.showDialog(this, "Escolher");
+        
+        final File file = fileChoose.getSelectedFile();
+        
+        if(file != null) {
+            commandTF.setText(file.getAbsolutePath());
+        }        
+    }//GEN-LAST:event_fileChooseBtnActionPerformed
     
     private void buildTable() {
         DefaultTableModel model = new DefaultTableModel();
@@ -296,13 +340,22 @@ public class MainView extends javax.swing.JFrame {
         
         Arrays.stream(COLUMNS).forEach(model::addColumn);
         
-        commandRepository.findAll().forEach(c -> model.addRow(new String[]{c.description(), c.command()}));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.getColumnModel().getColumn(0).setPreferredWidth(70);
+        table.getColumnModel().getColumn(1).setPreferredWidth(250);
+        table.getColumnModel().getColumn(2).setPreferredWidth(255);
+        
+        viewDataCommands.forEach(c -> model.addRow(new String[]{
+            String.valueOf(c.getId()), c.getDescription(), c.getCommand()}));
         
         table.getSelectionModel()
             .addListSelectionListener((ListSelectionEvent e) -> {
                 final int rowSelectedPosition = table.getSelectedRow();
-                final String commandDescription = (String) table.getValueAt(rowSelectedPosition, 0);
-                commandDescriptionView.setText(commandDescription);
+                if(table.getRowCount() > 0) {
+                    selectedCommand = 
+                            viewDataCommands.get(rowSelectedPosition);
+                    inputSelectedCommand();
+                }
             });
         
         scrollPanel.setViewportView(table);
@@ -312,28 +365,15 @@ public class MainView extends javax.swing.JFrame {
         return table.getSelectedRow()> -1;
     }
     
-    private void showOrHiddenCreateCommandView() {
-        panelCreateCommand.setVisible(showPanel);
-        panelCreateCommand.setSize(showPanel?SHOW:HIDDEN);
-    }
-    
-    private void redimentionFrame() {
-        final Dimension actualD = getSize();
-        actualD.width = actualD.width+panelCreateCommand.getWidth();
-        setSize(actualD);
-    }
-    
     private void preLoadCommands() {
-        commandRepository.save(new CommandEntity(1L, "Ping", "ping google.com.br", null, null));
-        commandRepository.save(new CommandEntity(1L, "Telnet", "telnet localhost 8080", null, null));
-        commandRepository.save(new CommandEntity(1L, "Bash", "bash /home/gedalias/Documentos/teste.sh", null, null));
+        viewDataCommands = commandRepository.findAll();
     }
     
     private void registerObserver() {
-        OnUpdateCommandSubject.add((c) ->
-              ((DefaultTableModel) table.getModel())
-                      .addRow(new String[]{c.description(), c.command()})
-            );
+        OnUpdateCommandSubject.getInstance().add((c) -> {
+                viewDataCommands.add(c);
+                refreshDataTable();
+        });
     }
     
     private void executeCommand(String command) {     
@@ -345,9 +385,21 @@ public class MainView extends javax.swing.JFrame {
             public void run() {
                 try {
                     executedProcess = Runtime.getRuntime().exec(command);
+                    inputValueEvent = (String value) -> {
+                        try {
+                            var output = executedProcess.getOutputStream();
+                            output.write(value.concat(BREAK_LINE).getBytes());
+                            output.flush();
+                        } catch (IOException ex) {
+                            Logger.getLogger(MainView.class.getName())
+                                    .log(Level.SEVERE, null, ex);
+                        }
+                    };
                     showOutputCommand();
                 } catch (IOException ex) {
                     outputCommandTA.setText(ex.getMessage());
+                } finally {
+                    inputValueEvent = null;
                 }
             }
         }.start();
@@ -357,7 +409,8 @@ public class MainView extends javax.swing.JFrame {
     private void showOutputCommand() {        
         int line;
 
-        try(BufferedInputStream reader = new BufferedInputStream(executedProcess.getInputStream())) {
+        try(BufferedInputStream reader = 
+                new BufferedInputStream(executedProcess.getInputStream())) {
             while((line = reader.read()) != -1) {
                 outputCommandTA.append(String.valueOf((char)line));
             }
@@ -380,40 +433,43 @@ public class MainView extends javax.swing.JFrame {
     
     private void resizeFrameForCommand() {
         final Dimension actualD = getSize();
-        actualD.height = actualD.height+150;
+        actualD.height = actualD.height+EXECUTION_PANEL_HEIGHT;
         setSize(actualD);
     }
     
-    private void inputValueInCommandExecution(final String parameter) {
-        if(executedProcess == null) {
-            return;
-        }
+    private void inputSelectedCommand() {
+        final CommandEntity commandEntity = selectedCommand;
+        descriptionTF.setText(commandEntity.getDescription());
+        commandTF.setText(commandEntity.getCommand());
+    }
+    
+    private void refreshDataTable() {
+        final DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
         
-        try(final OutputStream output = executedProcess.getOutputStream()) {
-            final String[] values = parameter.split(";");
-            for(String value: values) {
-                output.write(value.concat(BREAK_LINE).getBytes());
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
+        tableModel.getDataVector().removeAllElements();
+        tableModel.fireTableDataChanged();
+        
+        for(CommandEntity c: viewDataCommands) {
+            tableModel.addRow(new String[]{String.valueOf(c.getId()), 
+                          c.getDescription(), c.getCommand()});
         }
     }
         
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel commandDescriptionView;
     private javax.swing.JTextField commandTF;
+    private javax.swing.JButton deleteCommandBtn;
     private javax.swing.JTextField descriptionTF;
     private javax.swing.JButton executeCommandBtn;
+    private javax.swing.JButton fileChooseBtn;
     private javax.swing.JTextField inputParameterCommandTF;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JButton newCommandBtn;
     private javax.swing.JTextArea outputCommandTA;
     private javax.swing.JPanel panelCreateCommand;
+    private javax.swing.JButton resetCommandBtn;
     private javax.swing.JButton saveCommandBtn;
     private javax.swing.JScrollPane scrollCommandShow;
     private javax.swing.JScrollPane scrollPanel;

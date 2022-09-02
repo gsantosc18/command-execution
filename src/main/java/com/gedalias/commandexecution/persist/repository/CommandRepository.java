@@ -14,4 +14,5 @@ import java.util.List;
 public interface CommandRepository {
     CommandEntity save(CommandEntity command);
     List<CommandEntity> findAll();
+    void delete(CommandEntity command);
 }
