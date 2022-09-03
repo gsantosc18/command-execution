@@ -1,13 +1,14 @@
 package com.gedalias.commandexecution.persist.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import javax.persistence.*;
 
 @Entity
 @Table(name = "command")
-public class CommandEntity {
+public class CommandEntity implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "command_sq")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @SequenceGenerator(name = "command_sq", initialValue = 1, allocationSize = 1000)
     private Long id;
     @Column(name = "description")

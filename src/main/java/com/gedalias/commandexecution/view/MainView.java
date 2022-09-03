@@ -9,7 +9,6 @@ import com.gedalias.commandexecution.persist.entity.CommandEntity;
 import com.gedalias.commandexecution.persist.repository.CommandRepository;
 import com.gedalias.commandexecution.persist.repository.impl.CommandRepositoryImpl;
 import com.gedalias.commandexecution.utils.NotificationUtil;
-import java.awt.Dimension;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -34,12 +33,10 @@ public class MainView extends javax.swing.JFrame {
     }
     
     private JTable table;
-    private boolean showComponentOutputCommand = false;
     private Process executedProcess;
     private final String BREAK_LINE = "\n";
     
     private final String[] COLUMNS = new String[]{ "ID","Descrição", "Comando"};
-    private final int EXECUTION_PANEL_HEIGHT = 250;
     private final CommandRepository commandRepository = new CommandRepositoryImpl();
     
     private List<CommandEntity> viewDataCommands;
@@ -267,8 +264,6 @@ public class MainView extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        showOrHiddenComponentOutputCommand();
-
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -277,11 +272,7 @@ public class MainView extends javax.swing.JFrame {
             NotificationUtil.showMessage("É necessário selecionar uma linha");
             return;
         }
-        
-        final int rowPosition = table.getSelectedRow();        
-        final String command = viewDataCommands.get(rowPosition).getCommand();
-        resetViewCommandExecution();
-        executeCommand(command);
+        executeCommand(selectedCommand.getCommand());
         
     }//GEN-LAST:event_executeCommandBtnActionPerformed
 
@@ -304,7 +295,7 @@ public class MainView extends javax.swing.JFrame {
 
     private void stopProcessBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopProcessBtnActionPerformed
         executedProcess.destroy();
-        outputCommandTA.append("Processo encerrado");
+        outputCommandTA.append("Processo encerrado\n");
         
     }//GEN-LAST:event_stopProcessBtnActionPerformed
 
@@ -318,9 +309,8 @@ public class MainView extends javax.swing.JFrame {
     private void deleteCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCommandBtnActionPerformed
         final boolean confirmation = NotificationUtil.confirm("Deseja realmente apagar o registro?");
         if(confirmation) {
-            viewDataCommands.remove(selectedCommand);
-            refreshDataTable();
             commandRepository.delete(selectedCommand);
+            refreshDataTable();
         }
     }//GEN-LAST:event_deleteCommandBtnActionPerformed
 
@@ -373,7 +363,7 @@ public class MainView extends javax.swing.JFrame {
     }
     
     private boolean isSelectedTableRow() {
-        return table.getSelectedRow()> -1;
+        return selectedCommand != null;
     }
     
     private void preLoadCommands() {
@@ -387,10 +377,7 @@ public class MainView extends javax.swing.JFrame {
         });
     }
     
-    private void executeCommand(String command) {     
-        showComponentOutputCommand = true;
-        showOrHiddenComponentOutputCommand();
-        resizeFrameForCommand();
+    private void executeCommand(String command) {
         new Thread(){
             @Override
             public void run() {
@@ -428,24 +415,6 @@ public class MainView extends javax.swing.JFrame {
         } catch (IOException ex) {
             System.err.println(ex.getMessage());
         }
-    }
-    
-    private void resetViewCommandExecution() {
-        executedProcess = null;
-        outputCommandTA.setText("");
-    }
-    
-    private void showOrHiddenComponentOutputCommand() {
-        scrollCommandShow.setVisible(showComponentOutputCommand);
-        stopProcessBtn.setVisible(showComponentOutputCommand);
-        inputParameterCommandTF.setVisible(showComponentOutputCommand);
-        sendParameterCommandBtn.setVisible(showComponentOutputCommand);
-    }
-    
-    private void resizeFrameForCommand() {
-        final Dimension actualD = getSize();
-        actualD.height = actualD.height+EXECUTION_PANEL_HEIGHT;
-        setSize(actualD);
     }
     
     private void inputSelectedCommand() {
