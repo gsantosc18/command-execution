@@ -35,8 +35,9 @@ public class MainView extends javax.swing.JFrame {
     private JTable table;
     private Process executedProcess;
     private final String BREAK_LINE = "\n";
+    private final String EMPTY = "";
     
-    private final String[] COLUMNS = new String[]{ "ID","Descrição", "Comando"};
+    private final String[] COLUMNS = new String[]{ "ID", "Descrição", "Comando"};
     private final CommandRepository commandRepository = new CommandRepositoryImpl();
     
     private List<CommandEntity> viewDataCommands;
@@ -203,12 +204,6 @@ public class MainView extends javax.swing.JFrame {
             }
         });
 
-        inputParameterCommandTF.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                inputParameterCommandTFActionPerformed(evt);
-            }
-        });
-
         sendParameterCommandBtn.setText("Enviar");
         sendParameterCommandBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -272,6 +267,7 @@ public class MainView extends javax.swing.JFrame {
             NotificationUtil.showMessage("É necessário selecionar uma linha");
             return;
         }
+        outputCommandTA.setText(EMPTY);
         executeCommand(selectedCommand.getCommand());
         
     }//GEN-LAST:event_executeCommandBtnActionPerformed
@@ -303,6 +299,7 @@ public class MainView extends javax.swing.JFrame {
         final String parameter = inputParameterCommandTF.getText();
         if(inputValueEvent != null) {
             inputValueEvent.inputValue(parameter);
+            inputParameterCommandTF.setText(EMPTY);
         }        
     }//GEN-LAST:event_sendParameterCommandBtnActionPerformed
 
@@ -314,14 +311,10 @@ public class MainView extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_deleteCommandBtnActionPerformed
 
-    private void inputParameterCommandTFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inputParameterCommandTFActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_inputParameterCommandTFActionPerformed
-
     private void resetCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetCommandBtnActionPerformed
         selectedCommand = null;
-        descriptionTF.setText("");
-        commandTF.setText("");
+        descriptionTF.setText(EMPTY);
+        commandTF.setText(EMPTY);
     }//GEN-LAST:event_resetCommandBtnActionPerformed
 
     private void fileChooseBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileChooseBtnActionPerformed
@@ -378,30 +371,26 @@ public class MainView extends javax.swing.JFrame {
     }
     
     private void executeCommand(String command) {
-        new Thread(){
-            @Override
-            public void run() {
-                try {
-                    executedProcess = Runtime.getRuntime().exec(command);
-                    inputValueEvent = (String value) -> {
-                        try {
-                            var output = executedProcess.getOutputStream();
-                            output.write(value.concat(BREAK_LINE).getBytes());
-                            output.flush();
-                        } catch (IOException ex) {
-                            Logger.getLogger(MainView.class.getName())
-                                    .log(Level.SEVERE, null, ex);
-                        }
-                    };
-                    showOutputCommand();
-                } catch (IOException ex) {
-                    outputCommandTA.setText(ex.getMessage());
-                } finally {
-                    inputValueEvent = null;
-                }
+        new Thread(() -> {
+            try {
+                executedProcess = Runtime.getRuntime().exec(command);
+                inputValueEvent = (String value) -> {
+                    try {
+                        var output = executedProcess.getOutputStream();
+                        output.write(value.concat(BREAK_LINE).getBytes());
+                        output.flush();
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                };
+                showOutputCommand();
+            } catch (IOException ex) {
+                outputCommandTA.setText(ex.getMessage());
+            } finally {
+                inputValueEvent = null;
+                outputCommandTA.append("Fim da execução do comando\n");
             }
-        }.start();
-        
+        }).start();
     }
     
     private void showOutputCommand() {        
