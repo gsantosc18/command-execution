@@ -5,11 +5,11 @@
 package com.gedalias.commandexecution.view;
 
 import com.gedalias.commandexecution.persist.entity.CommandEntity;
+import com.gedalias.commandexecution.service.CommandProcessService;
 import com.gedalias.commandexecution.service.CommandService;
 import com.gedalias.commandexecution.service.impl.CommandServiceImpl;
+import com.gedalias.commandexecution.utils.CommandBuilder;
 import com.gedalias.commandexecution.utils.NotificationUtil;
-import com.gedalias.commandexecution.service.CommandProcessService;
-import com.gedalias.commandexecution.service.impl.CommandProcessServiceImpl;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -352,13 +352,14 @@ public class MainView extends javax.swing.JFrame {
     }
     
     private void executeCommand(String command) {
-        commandProcessService = new CommandProcessServiceImpl(command);
-        commandProcessService.start();
-        commandProcessService.onOutput(outputCommandTA::append);
-        commandProcessService.onFinish(() -> {
-            outputCommandTA.append("Processo finalizado!");
-            commandProcessService = null;
-        });
+        commandProcessService = CommandBuilder.create()
+            .command(command)
+            .onOutput(outputCommandTA::append)
+            .onFinish(() -> {
+                outputCommandTA.append("Processo finalizado!");
+                commandProcessService = null;
+            })
+            .builder();
     }
     
     private void inputSelectedCommand() {
