@@ -4,53 +4,41 @@
  */
 package com.gedalias.commandexecution.view;
 
-import com.gedalias.commandexecution.observer.OnUpdateCommandSubject;
 import com.gedalias.commandexecution.persist.entity.CommandEntity;
-import com.gedalias.commandexecution.persist.repository.CommandRepository;
-import com.gedalias.commandexecution.persist.repository.impl.CommandRepositoryImpl;
+import com.gedalias.commandexecution.service.CommandService;
+import com.gedalias.commandexecution.service.impl.CommandServiceImpl;
 import com.gedalias.commandexecution.utils.NotificationUtil;
+import com.gedalias.commandexecution.service.CommandProcessService;
+import com.gedalias.commandexecution.service.impl.CommandProcessServiceImpl;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
  * @author gedalias
  */
 public class MainView extends javax.swing.JFrame {
-    
-    interface CommandValueInputEvent {
-        void inputValue(String value);
-    }
-    
     private JTable table;
-    private Process executedProcess;
-    private final String BREAK_LINE = "\n";
-    private final String EMPTY = "";
-    
+    private CommandProcessService commandProcessService;
+    private final String EMPTY_VALUE = "";
     private final String[] COLUMNS = new String[]{ "ID", "Descrição", "Comando"};
-    private final CommandRepository commandRepository = new CommandRepositoryImpl();
-    
+    private final CommandService commandService = new CommandServiceImpl();
     private List<CommandEntity> viewDataCommands;
     private CommandEntity selectedCommand;
     
-    private CommandValueInputEvent inputValueEvent;
+//    private CommandValueInputEvent inputValueEvent;
 
     /**
      * Creates new form MainView
      */
     public MainView() {
         preLoadCommands();
-        registerObserver();
         initComponents();
     }
 
@@ -267,7 +255,7 @@ public class MainView extends javax.swing.JFrame {
             NotificationUtil.showMessage("É necessário selecionar uma linha");
             return;
         }
-        outputCommandTA.setText(EMPTY);
+        outputCommandTA.setText(EMPTY_VALUE);
         executeCommand(selectedCommand.getCommand());
         
     }//GEN-LAST:event_executeCommandBtnActionPerformed
@@ -286,35 +274,35 @@ public class MainView extends javax.swing.JFrame {
             commandEntity = selectedCommand;
         }
         
-        commandRepository.save(commandEntity);
+        commandService.save(commandEntity);
     }//GEN-LAST:event_saveCommandBtnActionPerformed
 
     private void stopProcessBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopProcessBtnActionPerformed
-        executedProcess.destroy();
+        commandProcessService.stop();
         outputCommandTA.append("Processo encerrado\n");
         
     }//GEN-LAST:event_stopProcessBtnActionPerformed
 
     private void sendParameterCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendParameterCommandBtnActionPerformed
         final String parameter = inputParameterCommandTF.getText();
-        if(inputValueEvent != null) {
-            inputValueEvent.inputValue(parameter);
-            inputParameterCommandTF.setText(EMPTY);
+        if(commandProcessService != null) {
+            commandProcessService.input(parameter);
+            inputParameterCommandTF.setText(EMPTY_VALUE);
         }        
     }//GEN-LAST:event_sendParameterCommandBtnActionPerformed
 
     private void deleteCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCommandBtnActionPerformed
         final boolean confirmation = NotificationUtil.confirm("Deseja realmente apagar o registro?");
         if(confirmation) {
-            commandRepository.delete(selectedCommand);
+            commandService.delete(selectedCommand);
             refreshDataTable();
         }
     }//GEN-LAST:event_deleteCommandBtnActionPerformed
 
     private void resetCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetCommandBtnActionPerformed
         selectedCommand = null;
-        descriptionTF.setText(EMPTY);
-        commandTF.setText(EMPTY);
+        descriptionTF.setText(EMPTY_VALUE);
+        commandTF.setText(EMPTY_VALUE);
     }//GEN-LAST:event_resetCommandBtnActionPerformed
 
     private void fileChooseBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileChooseBtnActionPerformed
@@ -360,50 +348,17 @@ public class MainView extends javax.swing.JFrame {
     }
     
     private void preLoadCommands() {
-        viewDataCommands = commandRepository.findAll();
-    }
-    
-    private void registerObserver() {
-        OnUpdateCommandSubject.getInstance().add((c) -> {
-                viewDataCommands = commandRepository.findAll();
-                refreshDataTable();
-        });
+        viewDataCommands = commandService.findAll();
     }
     
     private void executeCommand(String command) {
-        new Thread(() -> {
-            try {
-                executedProcess = Runtime.getRuntime().exec(command);
-                inputValueEvent = (String value) -> {
-                    try {
-                        var output = executedProcess.getOutputStream();
-                        output.write(value.concat(BREAK_LINE).getBytes());
-                        output.flush();
-                    } catch (IOException ex) {
-                        Logger.getLogger(MainView.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                };
-                showOutputCommand();
-            } catch (IOException ex) {
-                outputCommandTA.setText(ex.getMessage());
-            } finally {
-                inputValueEvent = null;
-                outputCommandTA.append("Fim da execução do comando\n");
-            }
-        }).start();
-    }
-    
-    private void showOutputCommand() {        
-        int line;
-
-        try(BufferedInputStream reader = 
-                new BufferedInputStream(executedProcess.getInputStream())) {
-            while((line = reader.read()) != -1) {
-                outputCommandTA.append(String.valueOf((char)line));
-            }
-        } catch (IOException ex) {
-            System.err.println(ex.getMessage());
-        }
+        commandProcessService = new CommandProcessServiceImpl(command);
+        commandProcessService.start();
+        commandProcessService.onOutput(outputCommandTA::append);
+        commandProcessService.onFinish(() -> {
+            outputCommandTA.append("Processo finalizado!");
+            commandProcessService = null;
+        });
     }
     
     private void inputSelectedCommand() {
