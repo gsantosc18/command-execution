@@ -278,17 +278,15 @@ public class MainView extends javax.swing.JFrame {
     }//GEN-LAST:event_saveCommandBtnActionPerformed
 
     private void stopProcessBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopProcessBtnActionPerformed
-        commandProcessService.stop();
-        outputCommandTA.append("Processo encerrado\n");
+        destroyCommand();
         
     }//GEN-LAST:event_stopProcessBtnActionPerformed
 
     private void sendParameterCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendParameterCommandBtnActionPerformed
+        validateProcess();
         final String parameter = inputParameterCommandTF.getText();
-        if(commandProcessService != null) {
-            commandProcessService.input(parameter);
-            inputParameterCommandTF.setText(EMPTY_VALUE);
-        }        
+        commandProcessService.input(parameter);
+        inputParameterCommandTF.setText(EMPTY_VALUE);
     }//GEN-LAST:event_sendParameterCommandBtnActionPerformed
 
     private void deleteCommandBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCommandBtnActionPerformed
@@ -355,10 +353,7 @@ public class MainView extends javax.swing.JFrame {
         commandProcessService = CommandBuilder.create()
             .command(command)
             .onOutput(outputCommandTA::append)
-            .onFinish(() -> {
-                outputCommandTA.append("Processo finalizado!");
-                commandProcessService = null;
-            })
+            .onFinish(this::destroyCommand)
             .builder();
     }
     
@@ -377,6 +372,21 @@ public class MainView extends javax.swing.JFrame {
         for(CommandEntity c: viewDataCommands) {
             tableModel.addRow(new String[]{String.valueOf(c.getId()), 
                           c.getDescription(), c.getCommand()});
+        }
+    }
+
+    private void destroyCommand() {
+        validateProcess();
+        commandProcessService.stop();
+        commandProcessService = null;
+        outputCommandTA.append("Processo finalizado!");
+    }
+
+    private void validateProcess() {
+        if(commandProcessService == null) {
+            String message = "O processo não foi iniciado";
+            NotificationUtil.showMessage(message);
+            throw new RuntimeException(message);
         }
     }
         
