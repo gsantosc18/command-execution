@@ -181,6 +181,8 @@ public class MainView extends javax.swing.JFrame {
                 .addGap(148, 148, 148))
         );
 
+        outputCommandTA.setEditable(false);
+        outputCommandTA.setBackground(new java.awt.Color(255, 255, 255));
         outputCommandTA.setColumns(20);
         outputCommandTA.setRows(5);
         scrollCommandShow.setViewportView(outputCommandTA);
